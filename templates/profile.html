@@ -10,7 +10,10 @@
             <section class="teacher=info">
 
               <h1 class="h2">{{ form.name }}</h1>
-              <p><span class="badge badge-secondary mr-2">Для путешествий </span>Рейтинг: {{ form.rating }} Ставка: {{ form.price }} / час</p>
+              <p>{%- for i in form.goals %}
+                <span class="badge badge-secondary mr-2">{{ goals[i] }}
+              </span>{% endfor %}
+              Рейтинг: {{ form.rating }} Ставка: {{ form.price }} / час</p>
               <p>{{ form.about}}</p>
 
             </section>

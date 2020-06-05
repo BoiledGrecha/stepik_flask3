@@ -1,20 +1,31 @@
 from flask import Flask, render_template, request
 from data import goals
 import json
-#from flask_debugtoolbar import DebugToolbarExtension
+from random import randint
 week_days = {"mon" : "Понедельник", "tue" : "Вторник", "wed" : "Среда",
       "thu" : "Четверг", "fri" : "Пятница", "sat" :"Суббота", "sun" : "Воскресение"}
 week_days_reverse = dict((v, k) for k, v in week_days.items())
 
 app = Flask(__name__)
-#app.debug = True
-
-#app.config["SECRET_KEY"] = "super_secret_key"
-#toolbar = DebugToolbarExtension(app)
 
 @app.route("/")
 def first():
-	return render_template("index.html", goals = goals)
+  with open("teachers.json", "r") as f:
+    data = json.load(f)
+  maximum = len(data) - 1
+  id_list = []
+  if maximum <= 5:
+    for i in range(maximum + 1):
+       id_list.append(i)
+  else:
+    for i in range (6):
+      while True:
+        tmp = randint(0, maximum)
+        if tmp not in id_list:
+          id_list.append(tmp)
+          break
+        
+  return render_template("index.html", form = data, goals = goals, id_list = id_list)
 
 def dict_value(dictionary):
   return dictionary["rating"]
@@ -32,8 +43,9 @@ def goal(goal):
 
 @app.route("/profiles/")
 def profile_all():
-  # print all teachers
-  return "Work"
+  with open("teachers.json", "r") as f:
+    data = json.load(f)
+  return render_template("all_profiles.html", form = data)
 
 @app.route("/profiles/<id>/")
 def profile(id):
@@ -49,8 +61,7 @@ def profile(id):
       for key, value in week[i].items():
         if value == True:
           week_remade[week_days[i]].append(key)
-    #print(week_remade)
-    return render_template("profile.html", form=data[id], week = week_remade, week_reverse = week_days_reverse)
+    return render_template("profile.html", form=data[id], week = week_remade, week_reverse = week_days_reverse, goals = goals)
   except:
     return "Wrong ID"
     
@@ -86,7 +97,6 @@ def booking(id, day, time):
     time = time.replace("_", ":")
     data = data[id]
     if data["free"][day][time] == False:
-      #maybe add special error page with redirection
       return "Already booked"
   except:
     return "Wrong URL"
@@ -119,9 +129,5 @@ def booking_done():
 
   return render_template("booking_done.html", form = data, time = date_time)
 
-
-# if __name__ == "__main__":
-# 	app.run(host = "185.162.131.72", port=82)
-
 if __name__ == "__main__":
-	app.run(debug=True)
+	app.run(debug=False)
