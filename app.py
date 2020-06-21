@@ -73,87 +73,62 @@ def profile(id):
           week_remade[week_days[i]].append(key)
     return render_template("profile.html", form=data, week = week_remade, week_reverse = week_days_reverse, goals = goals)
 
-@app.route("/request/")
+@app.route("/request/", methods = ["GET", "POST"])
 def request_func():
-    return render_template("request.html", goals = goals)
-
-@app.route("/request_done/", methods = ["POST"])
-def request_done():
-    if request.form["goal"] in goals:
-        goal = goals[request.form["goal"]]
+    if not request.form:
+        return render_template("request.html", goals = goals)
     else:
-        goal = request.form["goal"]
-    data = Selection(name = request.form["name"], time = request.form["time"],
+        if request.form["goal"] in goals:
+            goal = goals[request.form["goal"]]
+        else:
+            goal = request.form["goal"]
+        data = Selection(name = request.form["name"], time = request.form["time"],
             phone = request.form["phone"], goal = goal)
 
-    db.session.add(data)
-    db.session.commit()
-
-    return render_template("request_done.html", form=data)
-
-@app.route("/booking/<id>/<day>/<time>/")
-def booking(id, day, time):
-    try:
-        id = int(id)
-        data = db.session.query(Teacher).filter(Teacher.id == id).first()
-        if data == None:
-            raise Exception
-    except:
-        return "Wrong ID", 404
-
-    time = time.replace("_", ":")
-    free = json.loads(data.free)
-    if free[day][time] == False:
-        return "Already booked"
-    return render_template("booking.html", form = data,
-        date_time = week_days[day] + ", " + time, day = day, time = time)
-
-@app.route("/booking_done", methods = ["POST"])
-def booking_done():
-    data = { "name" : request.form["clientName"], "phone" : request.form["clientPhone"]}
-    date_time = week_days[request.form["clientWeekday"]] + ", " + request.form["clientTime"]
-    #add try except
-    main_data = db.session.query(Teacher).filter(Teacher.id == int(request.form["clientTeacher"])).first()
-    free = json.loads(main_data.free)
-    if free[request.form["clientWeekday"]][request.form["clientTime"]] == True:
-        free[request.form["clientWeekday"]][request.form["clientTime"]] = False
-        main_data.free = json.dumps(free)
+        db.session.add(data)
         db.session.commit()
+
+        return render_template("request_done.html", form=data)
+
+@app.route("/booking/<id>/<day>/<time>/", methods = ["GET", "POST"])
+def booking(id, day, time):
+    if not request.form:
+        try:
+            id = int(id)
+            data = db.session.query(Teacher).filter(Teacher.id == id).first()
+            if data == None:
+                raise Exception
+        except:
+            return "Wrong ID", 404
+    
+        time = time.replace("_", ":")
+        free = json.loads(data.free)
+        if free[day][time] == False:
+            return "Already booked"
+        return render_template("booking.html", form = data,
+            date_time = week_days[day] + ", " + time, day = day, time = time)
     else:
-        return "Alredy booked"
- 
-    booking = Booking(name = request.form["clientName"],
-                phone = request.form["clientPhone"],
-                day = request.form["clientWeekday"],
-                time = request.form["clientTime"],
-                teacher = main_data)
-    return render_template("booking_done.html", form = data, time = date_time)
-
-# @app.route("/booking_done", methods = ["POST"])
-# def booking_done():
-#   data = { "name" : request.form["clientName"], "phone" : request.form["clientPhone"]}
-#   date_time = week_days[request.form["clientWeekday"]] + ", " + request.form["clientTime"]
-  
-#   with open("teachers.json", "r+") as f:
-#       main_data = json.load(f)
-#       if main_data[int(request.form["clientTeacher"])]["free"][request.form["clientWeekday"]][request.form["clientTime"]] == True:
-#         main_data[int(request.form["clientTeacher"])]["free"][request.form["clientWeekday"]][request.form["clientTime"]] = False
-#         f.seek(0)
-#         json.dump(main_data, f)
-#       else:
-#         return "Alredy booked"
-
-#   with open("booking.json", "r+") as f:
-#     booking = json.load(f)
-#     booking.append({"name" : request.form["clientName"],
-#       "phone" : request.form["clientPhone"],
-#       "day" : request.form["clientWeekday"],
-#       "time" : request.form["clientTime"],
-#       "teacher_id" : request.form["clientTeacher"]})
-#     f.seek(0)
-#     json.dump(booking, f)
-
-#   return render_template("booking_done.html", form = data, time = date_time)
-
+        data = { "name" : request.form["clientName"], "phone" : request.form["clientPhone"]}
+        date_time = week_days[request.form["clientWeekday"]] + ", " + request.form["clientTime"]
+        #add try except
+        main_data = db.session.query(Teacher).filter(Teacher.id == int(request.form["clientTeacher"])).first()
+        free = json.loads(main_data.free)
+        if free[request.form["clientWeekday"]][request.form["clientTime"]] == True:
+            free[request.form["clientWeekday"]][request.form["clientTime"]] = False
+            main_data.free = json.dumps(free)
+            db.session.commit()
+        else:
+            return "Alredy booked"
+     
+        booking = Booking(name = request.form["clientName"],
+                    phone = request.form["clientPhone"],
+                    day = request.form["clientWeekday"],
+                    time = request.form["clientTime"],
+                    teacher = main_data)
+        
+        db.session.add(booking)
+        db.session.commit()
+        return render_template("booking_done.html", form = data, time = date_time)
+            
 if __name__ == "__main__":
-	app.run(debug=True)
+	app.run(debug=False)

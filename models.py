@@ -37,13 +37,5 @@ class Selection(db.Model):
     time = db.Column(db.String)
     phone = db.Column(db.String)
     goal = db.Column(db.String)
-    #id_teacher
-    
-# db.create_all()
 
-# @app.route("/")
-# def first():
-#     return "OK"
-    
-#if __name__ == "__main__":
-#	app.run(debug=False)
+# db.create_all()
