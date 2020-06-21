@@ -1,10 +1,18 @@
-import data
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from models import *
+from data import teachers
 import json
-import os
 
-if os.path.isfile("teachers.json"):
-  with open("teachers.json", "w")  as f:
-    json.dump(data.teachers, f)
-    print("Done")
-else:
-  print("File dont exist")
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///stepik.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+for i in teachers:
+    teacher = Teacher(name = i["name"], about = i["about"], rating = i["rating"],
+        picture = i["picture"], goals = json.dumps(i["goals"]),
+        free = json.dumps(i["free"]))
+    db.session.add(teacher)
+    
+db.session.commit()
